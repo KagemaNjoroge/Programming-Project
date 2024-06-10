@@ -12,8 +12,8 @@ class Poll(models.Model):
     updated_at = models.DateTimeField(default=now)
     created_by = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
 
-    candidates = models.ManyToManyField(get_user_model(), related_name="candidates")
-    avatar = models.ImageField(upload_to="polls/", null=True, blank=True)
+    candidates = models.ManyToManyField(get_user_model(), related_name="candidates", blank=True)
+    avatar = models.ImageField(upload_to="polls/", null=True, blank=True, default="polls/default.jpg")
 
     def __str__(self):
         return self.title
@@ -29,7 +29,7 @@ class PollWallet(models.Model):
     poll = models.ForeignKey(Poll, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f"{self.user.username} - {self.poll.title}"
+        return f'Wallet: {self.id}'
 
     class Meta:
         verbose_name_plural = "Poll Wallets"
