@@ -1,0 +1,174 @@
+{%load static%}
+<!DOCTYPE html>
+<html data-bs-theme="light" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>
+        Verify Email | Go-Vote
+    </title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.2/dist/cosmo/bootstrap.min.css">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;700&amp;display=swap">
+    <link rel="stylesheet" href="{%static 'accounts/css/styles.min.css'%}">
+</head>
+
+<body>
+    <style>
+        /* Customize modal to remove the bootstrap-ish feel and look */
+        .modal-content {
+            border: #ff0074;
+            border-radius: 10px;
+        }
+    </style>
+
+    <!--verify code modal-->
+    <div class="modal fade" id="verify-code-modal" tabindex="-1" aria-labelledby="verify-code-modal-label"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="verify-code-modal-label">Verify Code</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="get" action="{%url 'accounts:verification-codes'%}" id="verify_modal">
+                        {%csrf_token%}
+                        <div class="mb-3">
+                            <label for="code" class="form-label">Verification Code</label>
+                            <input type="text" class="form-control" id="code" name="code" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="verify_btn">Verify</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--verify code modal end-->
+    <section class="login-clean" style="background-color: transparent;font-family: Poppins, sans-serif;">
+        <form method="post" style="margin-top: 40px;max-width: 60pc;" action="{%url 'accounts:verification-codes'%}"
+            id="verify_form">
+            {%csrf_token%}
+            <h2 class="visually-hidden">Verify Email</h2>
+            <div class="illustration"><svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24"
+                    height="1em" viewBox="0 0 24 24" width="1em" fill="currentColor"
+                    style="color: #ff0074;--bs-primary: #ff0074;--bs-primary-rgb: 255,0,116;">
+                    <g>
+                        <rect fill="none" height="24" width="24" x="0"></rect>
+                        <path
+                            d="M12,19c0-3.87,3.13-7,7-7c1.08,0,2.09,0.25,3,0.68V4H2v16h10.08C12.03,19.67,12,19.34,12,19z M4,6l8,5l8-5v2l-8,5L4,8V6z M17.34,22l-3.54-3.54l1.41-1.41l2.12,2.12l4.24-4.24L23,16.34L17.34,22z">
+                        </path>
+                    </g>
+                </svg></div>
+            <p>
+                Let's verify your email address before you can login.
+            </p>
+            <div class="form-group mb-3"><input class="form-control" type="email" name="email" placeholder="Email"
+                    value="{{request.user.email}}" disabled>
+            </div>
+            <div class="form-group mb-3"><button class="btn btn-primary d-block w-100" type="submit" id="send-email"
+                    style="--bs-primary: #ff0074;--bs-primary-rgb: 255,0,116;background: #ff0074;">Send Verification
+                    E-mail</button></div>
+        </form>
+    </section>
+    <div id="toast-container" style="position: fixed; top: 1rem; right: 1rem; z-index: 9999;"></div>
+    <script src="{%static 'common/jquery.js'%}"></script>
+    <script src="{%static 'common/bootstrap5.js'%}"></script>
+
+
+    <script>
+        $(document).ready(function () {
+            $("#verify_form").submit(function (e) {
+                e.preventDefault();
+                var form = $(this);
+                var url = form.attr('action');
+                $('#send-email').html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...');
+                $.ajax({
+                    type: "POST",
+                    url: url,
+                    headers: {
+                        'X-CSRFToken': '{{csrf_token}}'
+                    },
+                    data: form.serialize(),
+                    success: function (data) {
+                        console.log(data);
+                        $('#login-button').html('Login');
+                        if (data['status'] == 'success') {
+                            // show modal
+                            $('#verify-code-modal').modal('show');
+
+
+                        } else {
+                            // show error toast
+                            let toast = `<div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                                <div class="toast-header">
+                                    <strong class="me-auto">Error</strong>
+                                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                                </div>
+                                <div class="toast-body">
+                                An error occurred. Please try again.
+                                </div>
+                            </div>`;
+                            $('#toast-container').html(toast);
+
+                        }
+                    }
+                }).done(function () {
+                    $('#send-email').html('Send Verification E-mail');
+                    // disable the button
+                    $('#send-email').prop('disabled', true);
+                });
+            });
+
+            $('verify_modal').submit(function (e) {
+                e.preventDefault();
+                var form = $(this);
+                var url = form.attr('action');
+                $('#verify_btn').html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...');
+                $.ajax({
+                    type: "GET",
+                    url: url,
+                    headers: {
+                        'X-CSRFToken': '{{csrf_token}}'
+                    },
+                    data: form.serialize(),
+                    success: function (data) {
+                        console.log(data);
+                        $('#verify_btn').html('Verify');
+                        if (data['status'] == 'success') {
+                            // show success toast
+                            let toast = `<div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                                <div class="toast-header">
+                                    <strong class="me-auto">Success</strong>
+                                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                                </div>
+                                <div class="toast-body">
+                                Your email has been verified successfully.
+                                </div>
+                            </div>`;
+                            $('#toast-container').html(toast);
+                            $('#verify-code-modal').modal('hide');
+                        } else {
+                            // show error toast
+                            let toast = `<div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                                <div class="toast-header">
+                                    <strong class="me-auto">Error</strong>
+                                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                                </div>
+                                <div class="toast-body
+                                An error occurred. Please try again.
+                                </div>
+                            </div>`;
+                            $('#toast-container').html(toast);
+
+                        }
+                    }
+
+                });
+            });
+        });
+
+    </script>
+
+</html>

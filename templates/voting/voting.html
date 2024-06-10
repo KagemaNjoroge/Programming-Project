@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Voting</title>
+
+<body>
+{% if wallet %}
+    <h1>Here are the polls you can vote in</h1>
+    {% for wall in wallet %}
+        <h3>
+        {{ wall.poll.title}}
+        </h3>
+    {% endfor %}
+{% endif %}
+</body>
+   
+</html>
