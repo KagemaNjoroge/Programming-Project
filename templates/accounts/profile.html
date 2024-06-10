@@ -1,21 +1,18 @@
+{% extends 'system/base.html' %}
+
 {%load static%}
 
-<!DOCTYPE html>
-<html data-bs-theme="light" lang="en">
+{% block heading %}
+<h4 class="mb-0">Profile</h4>
+{% endblock heading %}
 
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
-  <title>accounts</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.2/dist/cosmo/bootstrap.min.css">
-  <link rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;700&amp;display=swap">
+{% block content %}
   <link rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/material-design-icons/3.0.1/iconfont/material-icons.min.css">
   <link rel="stylesheet" href="{%static 'accounts/css/styles.min.css'%}">
-</head>
 
-<body>
+
+
   <style>
     /* Customize modal to remove the bootstrap-ish feel and look */
     .modal-content {
@@ -35,7 +32,7 @@
         </div>
         <div class="modal-body">
           <form method="post" action="{%url 'accounts:user' user.username%}" enctype="multipart/form-data"
-            id="update_profile" {%csrf_token%} <div class="mb-3">
+            id="update_profile">{%csrf_token%} <div class="mb-3">
 
             <!--hidden username-->
             <input type="hidden" name="username" value="{{user.username}}">
@@ -70,15 +67,7 @@
   <div class="container">
     <div class="main-body">
 
-      <!-- Breadcrumb -->
-      <nav aria-label="breadcrumb" class="main-breadcrumb">
-        <ol class="breadcrumb">
-          <li class="breadcrumb-item"><a href="/">Home</a></li>
-          <li class="breadcrumb-item"><a href="javascript:void(0)">User</a></li>
-          <li class="breadcrumb-item active" aria-current="page">User Profile</li>
-        </ol>
-      </nav>
-      <!-- /Breadcrumb -->
+
 
       <div class="row gutters-sm">
         <div class="col-md-4 mb-3">
@@ -87,7 +76,10 @@
               <div class="d-flex flex-column align-items-center text-center">
                 <img src="{{user.profile_image.url}}" alt="Admin" class="rounded-circle" width="150">
                 <div class="mt-3">
-                  <h4>John Doe</h4>
+                  <h4>
+                      {%if user.first_name%}{{user.first_name}}{%else%}N/A{%endif%}
+                      {%if user.last_name%}{{user.last_name}}{%else%}N/A{%endif%}
+                  </h4>
 
                 </div>
               </div>
@@ -208,8 +200,7 @@
 
     </div>
   </div>
-  <script src="{%static 'common/jquery.js'%}"></script>
-  <script src="{%static 'common/bootstrap5.js'%}"></script>
+
   <script>
     $(document).ready(function () {
       $("#update_profile").submit(function (e) {
@@ -228,10 +219,10 @@
           processData: false,
           contentType: false,
           success: function (data) {
-            if (data.status == 'success') {
+            if (data.status === 'success') {
               window.location.reload();
             } else {
-              alert(data.message);
+              console.log(data);
             }
           }
         }).done(function () {
@@ -240,6 +231,4 @@
       });
     });
   </script>
-</body>
-
-</html>
+{% endblock content %}
