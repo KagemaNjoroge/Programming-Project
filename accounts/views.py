@@ -1,19 +1,21 @@
 import json
-from django.http import HttpRequest, JsonResponse, QueryDict
-from django.shortcuts import render, redirect
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from .serializers import UserSerializer, UserRegistrationSerializer, LoginSerializer
-from rest_framework.views import APIView
-from rest_framework import status
-from .models import User, VerificationCodes
-from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
-from .utils import generate_verification_code, send_welcome_email
+
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.core.mail import EmailMessage
+from django.http import HttpRequest, JsonResponse
+from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework import status
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from .models import User, VerificationCodes
+from .serializers import UserSerializer, UserRegistrationSerializer, ProfileUpdateSerializer
+from .utils import generate_verification_code, send_welcome_email
 
 
 class UserManagement(APIView):
@@ -127,14 +129,24 @@ def logout_view(request: HttpRequest):
 
 
 @login_required(login_url="/accounts/login/")
-def profile(request: HttpRequest):
+@api_view(["GET", "POST"])
+def profile(request):
     if request.method == "GET":
         user = request.user
         return render(request, "accounts/profile.html", {"user": user})
-    return JsonResponse(
-        status=status.HTTP_405_METHOD_NOT_ALLOWED,
-        data={},
-    )
+
+    elif request.method == "POST":
+        serializer = ProfileUpdateSerializer(request.user, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                data={"message": "Profile updated successfully", "status": "success"},
+                status=status.HTTP_200_OK,
+            )
+        return Response(
+            data={"message": "Profile update failed", "status": "failed"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
 
 class VerificationCodesView(APIView):
