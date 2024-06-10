@@ -1,8 +1,11 @@
 from pathlib import Path
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = "django-insecure-w#+g#vei(su#1=&v*&)5i9cxhucs&87e=s12xwk3zz4dh3!-jz"
+SECRET_KEY = os.getenv("SECRET_KEY")
 AUTH_USER_MODEl = "accounts.User"
 DEBUG = True
 
@@ -67,8 +70,12 @@ WSGI_APPLICATION = "BlockChainVotingSystem.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("DATABASE_NAME"),
+        "USER": os.getenv("DATABASE_USER"),
+        "PASSWORD": os.getenv("DATABASE_PASSWORD"),
+        "HOST": os.getenv("DATABASE_HOST"),
+        "PORT": os.getenv("DATABASE_PORT"),
     }
 }
 
