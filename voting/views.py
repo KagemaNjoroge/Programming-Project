@@ -1,10 +1,14 @@
 import datetime
+import time
 from datetime import timezone
 from django.contrib.auth import get_user_model
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, render
+from rest_framework import status
 from rest_framework.decorators import api_view
 from django.http import JsonResponse, HttpRequest
 from django.contrib.auth.decorators import login_required
+from rest_framework.views import APIView
 
 from voting.utils import allocate_votes
 from .models import Poll, PollWallet
@@ -12,6 +16,8 @@ from blockchain.blockchain import VoteBlockChain, VoteTransaction
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from rest_framework.response import Response
+
+from .serializers import PollSerializer
 
 vote_blockchain = VoteBlockChain()
 
@@ -136,3 +142,25 @@ def voting_template_view(request: HttpRequest):
 @login_required(login_url="/accounts/login/")
 def home(request: HttpRequest):
     return render(request, "system/index.html")
+
+
+@login_required(login_url="/accounts/login/")
+def create_new_poll_page(request: HttpRequest):
+    return render(request, "voting/new_poll.html")
+
+
+class PollListView(LoginRequiredMixin, APIView):
+    def get(self, request):
+        polls = Poll.objects.all()
+        serializer = PollSerializer(polls, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+
+        serializer = PollSerializer(data=request.data)
+        serializer.initial_data["created_by"] = request.user.id
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
