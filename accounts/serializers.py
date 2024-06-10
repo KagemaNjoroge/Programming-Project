@@ -65,8 +65,16 @@ class UserSerializer(ModelSerializer):
         return ret
 
 
-class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField(required=True)
-    password = serializers.CharField(required=True, write_only=True)
+class ProfileUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'phone_number', 'profile_image', 'address']
 
-
+    def update(self, instance, validated_data):
+        instance.first_name = validated_data.get('first_name', instance.first_name)
+        instance.last_name = validated_data.get('last_name', instance.last_name)
+        instance.phone_number = validated_data.get('phone_number', instance.phone_number)
+        instance.profile_image = validated_data.get('profile_image', instance.profile_image)
+        instance.address = validated_data.get('address', instance.address)
+        instance.save()
+        return instance
