@@ -1,88 +1,21 @@
-import datetime
-import time
-from datetime import timezone
 from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import JsonResponse, HttpRequest
 from django.shortcuts import get_object_or_404, render
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.decorators import api_view
-from django.http import JsonResponse, HttpRequest
-from django.contrib.auth.decorators import login_required
+from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from blockchain.blockchain import VoteBlockChain
 from voting.utils import allocate_votes
-from .models import Poll, PollWallet
-from blockchain.blockchain import VoteBlockChain, VoteTransaction
-from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
-from rest_framework.response import Response
-
-from .serializers import PollSerializer
+from .models import Poll, PollWallet, PollInvitation
+from .serializers import PollSerializer, PollInvitationSerializer
 
 vote_blockchain = VoteBlockChain()
-
-
-@api_view(["POST"])
-def vote(request, poll_id):
-    poll = get_object_or_404(Poll, id=poll_id)
-    voter = request.user
-
-    candidate_id = request.data.get("candidate_id")
-    votes = int(request.data.get("votes", 1))
-
-    print(f"Voter: {voter.username}, Candidate: {candidate_id}, Votes: {votes}")
-
-    if candidate_id is None:
-        return Response({"error": "Candidate ID is required."}, status=400)
-
-    candidate = get_object_or_404(get_user_model(), id=candidate_id)
-
-    # check if the candidate is a participant in the poll
-    if candidate not in poll.candidates.all():
-        return Response(
-            {"error": "Candidate is not a participant in this poll."}, status=400
-        )
-    # check if the voting has started, or if it has ended
-    if poll.start_date > timezone.now():
-        return Response({"error": "Voting has not started yet."}, status=400)
-    if poll.end_date < timezone.now():
-        return Response({"error": "Voting has ended."}, status=400)
-
-    # Get or create PollWallet for voter
-    voter_poll_wallet, created = PollWallet.objects.get_or_create(user=voter, poll=poll)
-
-    # Verify if the user has enough votes in the poll wallet
-    if voter_poll_wallet.balance < votes:
-        return Response(
-            {"error": "You do not have enough votes to cast this vote."}, status=403
-        )
-
-    # Create VoteTransaction and add to blockchain
-    transaction = VoteTransaction(
-        sender=voter.username, receiver=candidate.username, votes=votes
-    )
-    vote_blockchain.create_transaction(transaction)
-
-    # Deduct votes from voter balance
-    initial_voter_balance = voter_poll_wallet.balance
-    voter_poll_wallet.balance -= votes
-    voter_poll_wallet.save()
-    print(
-        f"Voter {voter.username} balance before: {initial_voter_balance}, after: {voter_poll_wallet.balance}"
-    )
-
-    # Update candidate's balance in their PollWallet
-    candidate_wallet, created = PollWallet.objects.get_or_create(
-        user=candidate, poll=poll
-    )
-    initial_candidate_balance = candidate_wallet.balance
-    candidate_wallet.balance += votes
-    candidate_wallet.save()
-    print(
-        f"Candidate {candidate.username} balance before: {initial_candidate_balance}, after: {candidate_wallet.balance}"
-    )
-
-    return Response({"message": "Vote cast successfully."})
 
 
 @swagger_auto_schema(
@@ -129,12 +62,10 @@ def allocate_votes_view(request, poll_id):
 
 
 @login_required(login_url="/accounts/login/")
-def voting_template_view(request: HttpRequest):
-    # wallets
-    wallet = PollWallet.objects.filter(user=request.user).order_by("-poll__start_date").filter(
-        poll__end_date__gte=datetime.datetime.now(),
-        poll__start_date__lte=datetime.datetime.now(),
-    )
+def voting_template_view(request: HttpRequest, poll_id: int):
+    # wallets where the user is the current user and poll id = poll_id
+    poll = get_object_or_404(Poll, id=poll_id)
+    wallet = PollWallet.objects.filter(user=request.user, poll=poll).first()
 
     return render(request, "voting/voting.html", {"wallet": wallet})
 
@@ -156,7 +87,6 @@ class PollListView(LoginRequiredMixin, APIView):
         return Response(serializer.data)
 
     def post(self, request):
-
         serializer = PollSerializer(data=request.data)
         serializer.initial_data["created_by"] = request.user.id
 
@@ -164,3 +94,43 @@ class PollListView(LoginRequiredMixin, APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PollInvitationsView(LoginRequiredMixin, APIView):
+    def get(self, request, id: int):
+        poll_invitation = get_object_or_404(PollInvitation, id=id)
+        serializer = PollInvitationSerializer(poll_invitation, many=False)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(
+        operation_description="Create a new poll invitation",
+    )
+    def post(self, request):
+        serializer = PollInvitationSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@login_required(login_url="/accounts/login/")
+def my_polls_template_view(request: HttpRequest):
+    polls = Poll.objects.filter(created_by=request.user)
+    return render(request, "voting/my_polls.html", {"polls": polls})
+
+
+@login_required(login_url="/accounts/login/")
+@api_view(["GET"])
+def poll_invites_template_view(request: HttpRequest):
+    invitations = PollInvitation.objects.filter(invited_user=request.user.email)
+    return render(request, "voting/poll_invites.html", {"invitations": invitations})
+
+
+@login_required(login_url="/accounts/login/")
+def invite_users_for_poll(request: HttpRequest, poll_id: int):
+    poll = get_object_or_404(Poll, id=poll_id)
+    # all users except the current user
+    users = get_user_model().objects.exclude(id=request.user.id)
+
+    return render(request, "voting/invite_users.html", {"poll": poll, "users": users})
