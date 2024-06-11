@@ -1,0 +1,123 @@
+{% extends 'system/base.html' %}
+{% load static %}
+{% block heading %}
+    My Polls
+{% endblock heading %}
+
+{% block title %}
+    My Polls - Go-Vote
+{% endblock title %}
+{% block content %}
+<div class="container-fluid">
+    <h3 class="text-dark mb-4">My Polls</h3>
+<!--create new poll buttons-->
+<div class="mb-2">
+   <a href="{% url 'voting:create_new_poll' %}" class="btn btn-primary">
+       <i class="fa fa-add">
+           
+       </i>
+       New Poll
+   </a>
+</div>
+    <div class="card shadow">
+        <div class="card-header py-3">
+            <p class="text-primary m-0 fw-bold">This is a list of all the polls you have created</p>
+        </div>
+        <div class="card-body">
+            {% if polls %}
+                <div class="table-responsive table mt-2" role="grid" aria-describedby="dataTable_info">
+                    <table id="dataTable" class="table my-0">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Is active</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for poll in polls %}
+                                <tr
+                                    data-title="{{ poll.title }}"   
+                                    data-start-date="{{ poll.start_date }}"
+                                    data-end-date="{{ poll.end_date }}"
+                                    data-is-active="{{ poll.is_active }}"
+                                    data-id="{{ poll.id }}"
+                                    data-avatar="{{ poll.avatar.url }}"
+                                >
+                                    <td>{{ poll.title }}</td>
+                                    <td>{{ poll.start_date }}</td>
+                                    <td>{{ poll.end_date }}</td>
+                                    <td>
+                                        {% if poll.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-primary poll_details">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-warning poll_edit">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-warning" role="alert">
+                    You have not created any polls yet.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function() {
+        {% if polls %}
+            $('#dataTable').DataTable();
+        {% endif %}
+        
+        // poll details button event handler to show modal
+        $('.poll_details').on('click', function() {
+            let title = $(this).closest('tr').data('title');
+            let start_date = $(this).closest('tr').data('start-date');
+            let end_date = $(this).closest('tr').data('end-date');
+            let is_active = $(this).closest('tr').data('is-active');
+            let id = $(this).closest('tr').data('id');
+            let avatar = $(this).closest('tr').data('avatar');
+            
+            $('#pollDetailsModalLabel').text(title);
+            $('#poll_start_date').text(start_date);
+            $('#poll_end_date').text(end_date);
+            $('#poll_is_active').text(is_active ? 'Yes' : 'No');
+            $('#poll_avatar').attr('src', avatar);
+            
+            $('#pollDetailsModal').modal('show');
+        });
+        
+        $('.poll_edit').on('click', function() {
+            let title = $(this).closest('tr').data('title');
+            let start_date = $(this).closest('tr').data('start-date');
+            let end_date = $(this).closest('tr').data('end-date');
+            let is_active = $(this).closest('tr').data('is-active');
+            let id = $(this).closest('tr').data('id');
+            let avatar = $(this).closest('tr').data('avatar');
+            
+            $('#editPollDetailsModalLabel').text(title);
+            $('#edit_poll_start_date').val(start_date);
+            $('#edit_poll_end_date').val(end_date);
+            $('#edit_poll_is_active').val(is_active ? '1' : '0');
+            $('#edit_poll_avatar').attr('src', avatar);
+            
+            $('#editPollDetailsModal').modal('show');
+        });
+    });
+</script>
+{% endblock content %}
+
