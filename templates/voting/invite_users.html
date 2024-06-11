@@ -1,0 +1,73 @@
+{% extends 'system/base.html' %}
+{%load static%}
+{% block title %}Invite Users{% endblock title %}
+
+
+{% block heading %}
+Invite users to vote on your poll
+
+{% endblock heading %}
+
+{% block content %}
+<div class="container-fluid">
+    <h3 class="text-dark mb-4">My Polls</h3>
+    <!--create new poll buttons-->
+    <div class="mb-2">
+        <a href="{% url 'voting:create_new_poll' %}" class="btn btn-primary">
+            <i class="ti ti-add">
+
+            </i>
+            Invite by email
+        </a>
+    </div>
+    <div class="card shadow">
+        <div class="card-header py-3">
+            <p class="text-primary m-0 fw-bold">
+                This is a list of users you can invite to vote on your poll
+            </p>
+        </div>
+        <div class="card-body">
+            {% if users %}
+            <!--checkbox, username, email-->
+            <form method="post" action="">
+                {% csrf_token %}
+                <div class="table-responsive table mt-2" role="grid" aria-describedby="dataTable_info">
+                    <table id="dataTable" class="table my-0">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Invite</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr data-poll="{{ poll.id }}" data-email="{{user.email}}">
+                                <td>{{ user.username }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>
+                                    <input type="checkbox" name="users[]" value="{{ user.id }}">
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                </div>
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-add"></i>
+                        Invite
+                    </button>
+                </div>
+            </form>
+            {% else %}
+            <p>No users to invite</p>
+            {% endif %}
+        </div>
+
+
+    </div>
+</div>
+</div>
+{%endblock content%}
