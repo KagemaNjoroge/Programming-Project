@@ -1,11 +1,7 @@
 {%load static%}
 <div class="navbar-collapse justify-content-end px-0" id="navbarNav">
     <ul class="navbar-nav flex-row ms-auto align-items-center justify-content-end">
-        <a class="nav-link btn" data-bs-toggle="modal" data-bs-target="#aiAssistantModal">
-            <img src="{%static 'img/logos/ai_sparkles.svg'%}" alt="Ask AI"
-                style="width: 20px; height: 20px; margin-top: -5px;">
-
-        </a>
+     
         <li class="nav-item dropdown" href="{% url 'accounts:profile' %}">
             <a class="nav-link nav-icon-hover" href="{% url 'accounts:profile' %}" id="drop2" data-bs-toggle="dropdown"
                 aria-expanded="false">
