@@ -10,7 +10,7 @@ class PollAdmin(admin.ModelAdmin):
     list_filter = ("start_date", "end_date", "created_at")
     date_hierarchy = "start_date"
     ordering = ("start_date",)
-    filter_horizontal = ("candidates",)
+
     readonly_fields = ("created_at", "updated_at")
     fieldsets = (
         (
@@ -27,13 +27,6 @@ class PollAdmin(admin.ModelAdmin):
                 "classes": ("wide",),
             },
         ),
-        (
-            "Advanced options",
-            {
-                "classes": ("collapse",),
-                "fields": ("candidates",),
-            },
-        ),
     )
 
 
@@ -43,7 +36,7 @@ class PollWalletAdmin(admin.ModelAdmin):
     search_fields = ("user__username", "poll__title")
     list_filter = ("poll",)
     ordering = ("poll",)
-    readonly_fields = ("user", "poll")
+
     fieldsets = (
         (
             "Poll Wallet information",
