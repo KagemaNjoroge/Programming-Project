@@ -34,7 +34,10 @@ class VerificationCodes(models.Model):
     code = models.CharField(max_length=6)
     created_at = models.DateTimeField(auto_now_add=True)
     is_used = models.BooleanField(default=False)
-    expires_at = models.DateTimeField(default=now() + timedelta(minutes=5))
+    expires_at = models.DateTimeField(
+
+        auto_now=True
+    )
 
     def __str__(self):
         return f"{self.user.username} - {self.code}"
