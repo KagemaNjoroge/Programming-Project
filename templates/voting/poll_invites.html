@@ -1,0 +1,141 @@
+{% extends 'system/base.html' %}
+{% load static %}
+{% block heading %}
+    Poll Invites
+{% endblock heading %}
+
+{% block title %}
+    Poll Invites - Go-Vote
+{% endblock title %}
+{% block content %}
+    
+        <div id="content-wrapper" class="d-flex flex-column">
+    <div id="content">
+
+        <div class="container-fluid">
+            <h3 class="text-dark mb-4">
+                Poll Invites
+            </h3>
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <p class="text-primary m-0 fw-bold">
+                        These are the polls you have been invited to vote in
+                    </p>
+                </div>
+                <div class="card-body">
+                 
+                    <div class="table-responsive table mt-2" role="grid" aria-describedby="dataTable_info">
+                        <table id="dataTable" class="table my-0">
+                            <thead>
+                                <tr>
+                                    <th>Poll</th>
+                                    <th>Invited on</th>
+                                    <th>Accepted?</th>
+                              
+                                    <th>Actions</th>
+                               
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for invite in invitations %}
+                                    <tr
+                                            data-title="{{ invite.poll.title }}"    
+                                            data-created-at="{{ invite.created_at }}"
+                                            data-accepted="{{ invite.accepted }}"
+                                            data-id="{{ invite.id }}"
+                                            data-poll-id="{{ invite.poll.id }}"
+                                    
+                                    >
+                                        <td>{{ invite.poll.title}}</td>
+                                        <td>{{ invite.created_at }}</td>
+                                        <td>
+                                            {% if invite.accepted %}
+                                                <span class="badge bg-success">Accepted</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Not Accepted</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <!--accept/decline buttons-->
+                                            {% if not invite.accepted %}
+                                                <a href="" class="btn btn-success btn-sm accept">
+                                                    <i class="fas fa-check"></i> Accept
+                                                </a>
+                                            {% endif %}
+                                            <a href="" class="btn btn-danger btn-sm decline">
+                                                <i class="fas fa-times"></i> Decline
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                   
+                            
+                            </tbody>
+                            
+                        </table>
+                    </div>
+                
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    <script>
+      $(document).ready(function() {
+    $('.accept').on('click', function(event) {
+        event.preventDefault();
+        var id = $(this).closest('tr').data('id');
+        var poll_id = $(this).closest('tr').data('poll-id');
+
+        var data = {
+            id: id,
+            poll: poll_id,
+            accepted: true
+        };
+
+        $.ajax({
+            url: "/polls/poll-invitations/" + id + "/",  // Updated URL
+            type: 'PUT',
+            data: JSON.stringify(data),  // JSON stringify the data
+            contentType: "application/json",  // Set content type to JSON
+            success: function(response) {
+                if (response.status === 'success') {
+                    // Handle success response
+                } else {
+                    // Handle failure response
+                }
+            },
+            error: function(xhr, status, error) {
+                console.log(xhr);
+            }
+        });
+    });
+
+    $('.decline').on('click', function(event) {
+        event.preventDefault();
+        var id = $(this).closest('tr').data('id');
+        var poll_id = $(this).closest('tr').data('poll-id');
+
+        var data = {
+            id: id,
+            poll: poll_id,
+            accepted: false
+        };
+
+        $.ajax({
+            url: "/polls/poll-invitations/" + id + "/",  // Updated URL
+            type: 'PUT',
+            data: JSON.stringify(data),  // JSON stringify the data
+            contentType: "application/json",  // Set content type to JSON
+            success: function(response) {
+                location.reload();  // Reload the page on success
+            },
+            error: function(xhr, status, error) {
+                console.log(xhr);
+            }
+        });
+    });
+});
+
+    </script>   
+{% endblock content %}
